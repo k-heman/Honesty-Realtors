@@ -1,0 +1,119 @@
+/* ============================================
+   DESIGN TOKENS - Honesty Realtors
+   Premium Real Estate Color Palette & Variables
+   ============================================ */
+
+:root {
+  /* === Primary Colors === */
+  --color-navy: #0a1628;
+  --color-navy-light: #132038;
+  --color-navy-lighter: #1b2d4a;
+  --color-gold: #c8a951;
+  --color-gold-light: #dac06e;
+  --color-gold-dark: #b08f3a;
+  --color-warm-orange: #e8965a;
+
+  /* === Neutral Colors === */
+  --color-white: #ffffff;
+  --color-off-white: #f8f9fc;
+  --color-light-gray: #eef0f5;
+  --color-mid-gray: #9ba3b5;
+  --color-dark-gray: #4a5568;
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #64748b;
+
+  /* === Accent Colors === */
+  --color-success: #10b981;
+  --color-info: #3b82f6;
+  --color-badge-new: #10b981;
+  --color-badge-featured: #c8a951;
+
+  /* === Font Families === */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* === Font Sizes === */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.25rem;
+
+  /* === Font Weights === */
+  --fw-light: 300;
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  /* === Spacing (4px base) === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* === Border Radius === */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 50px;
+
+  /* === Transitions === */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  --transition-bounce: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* === Box Shadows === */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+  --shadow-card-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --shadow-glass: 0 25px 60px rgba(0, 0, 0, 0.3);
+
+  /* === Glassmorphism === */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-light: rgba(255, 255, 255, 0.15);
+  --glass-bg-dark: rgba(10, 22, 40, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(20px);
+  --header-glass-bg: rgba(255, 255, 255, 0.88);
+  --header-glass-blur: blur(16px);
+
+  /* === Gradients === */
+  --gradient-gold: linear-gradient(135deg, #c8a951, #e8965a);
+  --gradient-navy: linear-gradient(135deg, #0a1628, #1b2d4a);
+  --gradient-hero-overlay: linear-gradient(
+    135deg,
+    rgba(10, 22, 40, 0.78),
+    rgba(10, 22, 40, 0.52)
+  );
+  --gradient-section: linear-gradient(180deg, #f8f9fc, #ffffff);
+  --gradient-text: linear-gradient(135deg, #0a1628, #1b2d4a);
+
+  /* === Container === */
+  --container-max: 1280px;
+  --container-padding: var(--space-6);
+
+  /* === Z-Index === */
+  --z-header: 1000;
+  --z-mobile-nav: 999;
+  --z-overlay: 100;
+  --z-badge: 10;
+}
