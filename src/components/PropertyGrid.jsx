@@ -1,21 +1,44 @@
 import { useEffect, useRef } from 'react';
 import PropertyCard from './PropertyCard';
-import { properties } from '../data/properties';
+import { useProperties } from '../context/PropertyContext';
 import '../styles/PropertyGrid.css';
+
+/**
+ * PropertySkeleton Component
+ * Placeholder skeleton for property card loading states.
+ */
+function PropertySkeleton() {
+  return (
+    <div className='property-card-skeleton'>
+      <div className='property-card-skeleton__image'></div>
+      <div className='property-card-skeleton__content'>
+        <div className='property-card-skeleton__title'></div>
+        <div className='property-card-skeleton__text'></div>
+        <div className='property-card-skeleton__badges'>
+          <div className='property-card-skeleton__badge'></div>
+          <div className='property-card-skeleton__badge'></div>
+        </div>
+        <div className='property-card-skeleton__button'></div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * PropertyGrid Component
  * Renders a responsive grid of PropertyCard components with scroll-triggered
  * fade-in animations using the IntersectionObserver API.
- *
- * Each grid item starts invisible and gains the 'visible' class
- * when it enters the viewport (threshold: 10%).
+ * Uses Firestore real-time context data.
  */
 function PropertyGrid() {
+  const { filteredProperties, loading, resetFilters } = useProperties();
   // Ref to the grid container for observing child elements
   const gridRef = useRef(null);
 
   useEffect(() => {
+    // If loading or empty, there is nothing to observe
+    if (loading || filteredProperties.length === 0) return;
+
     // Create an IntersectionObserver to watch for cards entering the viewport
     const observer = new IntersectionObserver(
       (entries) => {
@@ -34,15 +57,20 @@ function PropertyGrid() {
       }
     );
 
-    // Observe all grid item children
-    if (gridRef.current) {
-      const items = gridRef.current.querySelectorAll('.property-grid__item');
-      items.forEach((item) => observer.observe(item));
-    }
+    // Observe all grid item children after a tiny render delay
+    const timer = setTimeout(() => {
+      if (gridRef.current) {
+        const items = gridRef.current.querySelectorAll('.property-grid__item');
+        items.forEach((item) => observer.observe(item));
+      }
+    }, 50);
 
-    // Cleanup observer on unmount
-    return () => observer.disconnect();
-  }, []);
+    // Cleanup observer on unmount or updates
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [filteredProperties, loading]);
 
   return (
     <section className='property-grid-section' id='properties'>
@@ -52,14 +80,36 @@ function PropertyGrid() {
           Handpicked premium properties across Hyderabad
         </p>
 
-        {/* Grid container with ref for IntersectionObserver */}
-        <div className='property-grid' ref={gridRef}>
-          {properties.map((property) => (
-            <div key={property.id} className='property-grid__item'>
-              <PropertyCard property={property} />
-            </div>
-          ))}
-        </div>
+        {/* Loading Skeletons */}
+        {loading ? (
+          <div className='property-grid'>
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <PropertySkeleton key={idx} />
+            ))}
+          </div>
+        ) : (
+          /* Grid container with ref for IntersectionObserver */
+          <div className='property-grid' ref={gridRef}>
+            {filteredProperties.length === 0 ? (
+              <div className='property-grid-empty'>
+                <div className='property-grid-empty__icon'>🔍</div>
+                <h3 className='property-grid-empty__title'>No Properties Found</h3>
+                <p className='property-grid-empty__description'>
+                  No properties match your active search filters. Try selecting a different location or price range.
+                </p>
+                <button className='property-grid-empty__btn' onClick={resetFilters}>
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              filteredProperties.map((property) => (
+                <div key={property.id} className='property-grid__item'>
+                  <PropertyCard property={property} />
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
