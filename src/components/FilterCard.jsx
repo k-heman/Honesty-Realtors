@@ -91,17 +91,6 @@ function FilterCard() {
     }
   }, [searchTerm, properties]);
 
-  // Render glassmorphic skeletons if data is loading from Firestore
-  if (loading || !filterConfig) {
-    return (
-      <div className='filter-card filter-card--loading'>
-        <div className='filter-card__skeleton-title'></div>
-        <div className='filter-card__skeleton-tabs'></div>
-        <div className='filter-card__skeleton-inputs'></div>
-      </div>
-    );
-  }
-
   // Extract category names from the database configuration
   const categories = Object.keys(filterConfig);
 

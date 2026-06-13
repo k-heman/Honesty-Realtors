@@ -29,12 +29,14 @@ const categoryToTypeMap = {
 };
 
 export function PropertyProvider({ children }) {
-  const [properties, setProperties] = useState([]);
-  const [filteredProperties, setFilteredProperties] = useState([]);
-  const [filterConfig, setFilterConfig] = useState(null);
-  const [locations, setLocations] = useState([]);
-  const [priceRanges, setPriceRanges] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Pre-populate with local fallback data so the UI renders instantly (no loading flash).
+  // Firebase real-time listeners will silently replace this with live data.
+  const [properties, setProperties] = useState(fallbackProperties);
+  const [filteredProperties, setFilteredProperties] = useState(fallbackProperties);
+  const [filterConfig, setFilterConfig] = useState(fallbackFilterConfig);
+  const [locations, setLocations] = useState(fallbackLocations);
+  const [priceRanges, setPriceRanges] = useState(fallbackPriceRanges);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Keep latest search criteria accessible inside listener callbacks
@@ -54,8 +56,6 @@ export function PropertyProvider({ children }) {
     setSearchCriteriaState(criteria);
   };
 
-  // Manual re-fetch (used for the refreshData context value)
-  const setupListeners = () => {/* handled in useEffect */};
 
   useEffect(() => {
     let unsubProperties = null;
@@ -63,8 +63,6 @@ export function PropertyProvider({ children }) {
     let cancelled = false;
 
     const init = async () => {
-      setLoading(true);
-
       try {
         // 1. Seed database if completely empty (no-op if already seeded)
         await seedDatabaseIfEmpty();
@@ -79,8 +77,6 @@ export function PropertyProvider({ children }) {
             setFilterConfig(configData.filterConfig);
             setPriceRanges(configData.priceRanges);
           }
-        } else {
-          throw new Error("Configuration document 'config/filters' not found");
         }
 
         // 3. Real-time listener: properties collection
@@ -93,17 +89,15 @@ export function PropertyProvider({ children }) {
           (snapshot) => {
             if (cancelled) return;
             const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-            setProperties(list);
-            setFilteredProperties(list);
-            setLoading(false);
+            // Only replace fallback if Firebase actually has data
+            if (list.length > 0) {
+              setProperties(list);
+              setFilteredProperties(list);
+            }
           },
           (err) => {
             if (cancelled) return;
             console.warn('Firestore properties listener error:', err);
-            setError(err.message);
-            setProperties(fallbackProperties);
-            setFilteredProperties(fallbackProperties);
-            setLoading(false);
           }
         );
 
@@ -116,26 +110,21 @@ export function PropertyProvider({ children }) {
               .map((d) => d.data())
               .filter((loc) => loc.status !== 'inactive' && loc.locationName)
               .map((loc) => loc.locationName);
-            setLocations(['All Locations', ...activeNames]);
+            if (activeNames.length > 0) {
+              setLocations(['All Locations', ...activeNames]);
+            }
           },
           (err) => {
             if (cancelled) return;
             console.warn('Firestore locations listener error:', err);
-            setLocations(fallbackLocations);
           }
         );
 
         if (!cancelled) setError(null);
       } catch (err) {
         if (cancelled) return;
-        console.warn('Firestore init failed. Falling back to local data:', err);
-        setError(err.message);
-        setProperties(fallbackProperties);
-        setFilteredProperties(fallbackProperties);
-        setFilterConfig(fallbackFilterConfig);
-        setLocations(fallbackLocations);
-        setPriceRanges(fallbackPriceRanges);
-        setLoading(false);
+        // Fallback data is already in state, just log the warning
+        console.warn('Firestore init failed, using local data:', err);
       }
     };
 

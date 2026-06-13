@@ -88,10 +88,10 @@ function Header() {
         <a className='header__logo-link' href='#' onClick={(e) => handleNavLinkClick('Home', e)}>
           <img
             src='/images/logo.png'
-            alt='Honesty Realtors'
+            alt='Honesty Realtor'
             className='header-logo'
           />
-          <span className='header__brand'>Honesty Realtors</span>
+          <span className='header__brand'>Honesty Realtor</span>
         </a>
 
         {/* Desktop navigation links */}

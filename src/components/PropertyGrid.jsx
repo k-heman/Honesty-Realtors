@@ -80,36 +80,27 @@ function PropertyGrid() {
           Handpicked premium properties across Hyderabad
         </p>
 
-        {/* Loading Skeletons */}
-        {loading ? (
-          <div className='property-grid'>
-            {Array.from({ length: 4 }).map((_, idx) => (
-              <PropertySkeleton key={idx} />
-            ))}
-          </div>
-        ) : (
-          /* Grid container with ref for IntersectionObserver */
-          <div className='property-grid' ref={gridRef}>
-            {filteredProperties.length === 0 ? (
-              <div className='property-grid-empty'>
-                <div className='property-grid-empty__icon'>🔍</div>
-                <h3 className='property-grid-empty__title'>No Properties Found</h3>
-                <p className='property-grid-empty__description'>
-                  No properties match your active search filters. Try selecting a different location or price range.
-                </p>
-                <button className='property-grid-empty__btn' onClick={resetFilters}>
-                  Clear Filters
-                </button>
+        {/* Property Grid - always renders real cards (state pre-populated with fallback data) */}
+        <div className='property-grid' ref={gridRef}>
+          {filteredProperties.length === 0 ? (
+            <div className='property-grid-empty'>
+              <div className='property-grid-empty__icon'>🔍</div>
+              <h3 className='property-grid-empty__title'>No Properties Found</h3>
+              <p className='property-grid-empty__description'>
+                No properties match your active search filters. Try selecting a different location or price range.
+              </p>
+              <button className='property-grid-empty__btn' onClick={resetFilters}>
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            filteredProperties.map((property) => (
+              <div key={property.id} className='property-grid__item'>
+                <PropertyCard property={property} />
               </div>
-            ) : (
-              filteredProperties.map((property) => (
-                <div key={property.id} className='property-grid__item'>
-                  <PropertyCard property={property} />
-                </div>
-              ))
-            )}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </section>
   );
