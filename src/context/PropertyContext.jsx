@@ -1,12 +1,19 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  query,
+  orderBy,
+} from 'firebase/firestore';
 import { db } from '../firebase';
 import { seedDatabaseIfEmpty } from '../utils/dbSeeder';
-import { 
-  properties as fallbackProperties, 
-  filterConfig as fallbackFilterConfig, 
-  locations as fallbackLocations, 
-  priceRanges as fallbackPriceRanges 
+import {
+  properties as fallbackProperties,
+  filterConfig as fallbackFilterConfig,
+  locations as fallbackLocations,
+  priceRanges as fallbackPriceRanges,
 } from '../data/properties';
 
 // Create the Context
@@ -30,65 +37,116 @@ export function PropertyProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Search filter state
-  const [searchCriteria, setSearchCriteria] = useState({
+  // Keep latest search criteria accessible inside listener callbacks
+  const searchCriteriaRef = useRef({
     searchTerm: '',
     category: null,
     subFilter: null,
     nestedFilter: null,
     location: 'All Locations',
     minPrice: 0,
-    maxPrice: Infinity
+    maxPrice: Infinity,
   });
+  const [searchCriteria, setSearchCriteriaState] = useState(searchCriteriaRef.current);
 
-  // Fetch data from Firestore
-  const fetchFirebaseData = async () => {
-    setLoading(true);
-    try {
-      // 1. Try to seed database if empty
-      await seedDatabaseIfEmpty();
-
-      // 2. Fetch properties
-      const propertiesColRef = collection(db, 'properties');
-      const propertiesSnapshot = await getDocs(propertiesColRef);
-      const propertiesList = propertiesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // 3. Fetch configuration
-      const configDocRef = doc(db, 'config', 'filters');
-      const configDocSnap = await getDoc(configDocRef);
-      
-      if (configDocSnap.exists()) {
-        const configData = configDocSnap.data();
-        setFilterConfig(configData.filterConfig);
-        setLocations(configData.locations);
-        setPriceRanges(configData.priceRanges);
-      } else {
-        throw new Error("Configuration document 'config/filters' not found");
-      }
-
-      setProperties(propertiesList);
-      setFilteredProperties(propertiesList);
-      setError(null);
-    } catch (err) {
-      console.warn("Firestore fetch failed. Falling back to local data source:", err);
-      setError(err.message);
-      
-      // Fallback to static local data
-      setProperties(fallbackProperties);
-      setFilteredProperties(fallbackProperties);
-      setFilterConfig(fallbackFilterConfig);
-      setLocations(fallbackLocations);
-      setPriceRanges(fallbackPriceRanges);
-    } finally {
-      setLoading(false);
-    }
+  const setSearchCriteria = (criteria) => {
+    searchCriteriaRef.current = criteria;
+    setSearchCriteriaState(criteria);
   };
 
+  // Manual re-fetch (used for the refreshData context value)
+  const setupListeners = () => {/* handled in useEffect */};
+
   useEffect(() => {
-    fetchFirebaseData();
+    let unsubProperties = null;
+    let unsubLocations = null;
+    let cancelled = false;
+
+    const init = async () => {
+      setLoading(true);
+
+      try {
+        // 1. Seed database if completely empty (no-op if already seeded)
+        await seedDatabaseIfEmpty();
+
+        // 2. Fetch static config (filterConfig tree + priceRanges) once
+        const configDocRef = doc(db, 'config', 'filters');
+        const configDocSnap = await getDoc(configDocRef);
+
+        if (configDocSnap.exists()) {
+          const configData = configDocSnap.data();
+          if (!cancelled) {
+            setFilterConfig(configData.filterConfig);
+            setPriceRanges(configData.priceRanges);
+          }
+        } else {
+          throw new Error("Configuration document 'config/filters' not found");
+        }
+
+        // 3. Real-time listener: properties collection
+        const propertiesQuery = query(
+          collection(db, 'properties'),
+          orderBy('createdAt', 'desc')
+        );
+        unsubProperties = onSnapshot(
+          propertiesQuery,
+          (snapshot) => {
+            if (cancelled) return;
+            const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+            setProperties(list);
+            setFilteredProperties(list);
+            setLoading(false);
+          },
+          (err) => {
+            if (cancelled) return;
+            console.warn('Firestore properties listener error:', err);
+            setError(err.message);
+            setProperties(fallbackProperties);
+            setFilteredProperties(fallbackProperties);
+            setLoading(false);
+          }
+        );
+
+        // 4. Real-time listener: locations collection
+        unsubLocations = onSnapshot(
+          collection(db, 'locations'),
+          (snapshot) => {
+            if (cancelled) return;
+            const activeNames = snapshot.docs
+              .map((d) => d.data())
+              .filter((loc) => loc.status !== 'inactive' && loc.locationName)
+              .map((loc) => loc.locationName);
+            setLocations(['All Locations', ...activeNames]);
+          },
+          (err) => {
+            if (cancelled) return;
+            console.warn('Firestore locations listener error:', err);
+            setLocations(fallbackLocations);
+          }
+        );
+
+        if (!cancelled) setError(null);
+      } catch (err) {
+        if (cancelled) return;
+        console.warn('Firestore init failed. Falling back to local data:', err);
+        setError(err.message);
+        setProperties(fallbackProperties);
+        setFilteredProperties(fallbackProperties);
+        setFilterConfig(fallbackFilterConfig);
+        setLocations(fallbackLocations);
+        setPriceRanges(fallbackPriceRanges);
+        setLoading(false);
+      }
+    };
+
+    init();
+
+    // Cleanup: unsubscribe real-time listeners on unmount
+    return () => {
+      cancelled = true;
+      if (unsubProperties) unsubProperties();
+      if (unsubLocations) unsubLocations();
+    };
   }, []);
 
   // Filter application function
@@ -216,7 +274,7 @@ export function PropertyProvider({ children }) {
       setSearchCriteria,
       triggerSearch,
       resetFilters,
-      refreshData: fetchFirebaseData
+      refreshData: () => {}, // no-op: real-time listeners keep data always current
     }}>
       {children}
     </PropertyContext.Provider>
