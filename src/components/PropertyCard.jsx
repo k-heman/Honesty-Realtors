@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import '../styles/PropertyCard.css';
 
 /**
@@ -13,8 +14,14 @@ import '../styles/PropertyCard.css';
  * @param {Object} props.property - The property data object
  */
 function PropertyCard({ property }) {
+  const navigate = useNavigate();
+
+  const handleViewDetails = () => {
+    navigate(`/property/${property.id}`);
+  };
+
   return (
-    <div className='property-card'>
+    <div className='property-card' onClick={handleViewDetails}>
       {/* Image section with badges and hover overlay */}
       <div className='property-card__image-container'>
         <img
@@ -55,7 +62,7 @@ function PropertyCard({ property }) {
         <p className='property-card__description'>{property.description}</p>
 
         {/* Call-to-action button */}
-        <button className='property-card__btn'>View Details →</button>
+        <button className='property-card__btn' onClick={handleViewDetails}>View Details →</button>
       </div>
     </div>
   );

@@ -1,13 +1,28 @@
+import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import PropertyGrid from './components/PropertyGrid';
+import PropertyDetails from './components/PropertyDetails';
 import Footer from './components/Footer';
 import { PropertyProvider } from './context/PropertyContext';
 import './index.css';
 
 /**
+ * HomePage Component
+ * Landing page layout with hero and property grid
+ */
+function HomePage() {
+  return (
+    <>
+      <HeroSection />
+      <PropertyGrid />
+    </>
+  );
+}
+
+/**
  * App Component
- * Main application layout combining all sections wrapped in PropertyProvider
+ * Main application layout with routing, wrapped in PropertyProvider
  */
 function App() {
   return (
@@ -15,8 +30,10 @@ function App() {
       <div className='app'>
         <Header />
         <main>
-          <HeroSection />
-          <PropertyGrid />
+          <Routes>
+            <Route path='/' element={<HomePage />} />
+            <Route path='/property/:id' element={<PropertyDetails />} />
+          </Routes>
         </main>
         <Footer />
       </div>

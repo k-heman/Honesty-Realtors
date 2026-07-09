@@ -31,12 +31,12 @@ const categoryToTypeMap = {
 export function PropertyProvider({ children }) {
   // Pre-populate with local fallback data so the UI renders instantly (no loading flash).
   // Firebase real-time listeners will silently replace this with live data.
-  const [properties, setProperties] = useState(fallbackProperties);
-  const [filteredProperties, setFilteredProperties] = useState(fallbackProperties);
+  const [properties, setProperties] = useState([]);
+  const [filteredProperties, setFilteredProperties] = useState([]);
   const [filterConfig, setFilterConfig] = useState(fallbackFilterConfig);
   const [locations, setLocations] = useState(fallbackLocations);
   const [priceRanges, setPriceRanges] = useState(fallbackPriceRanges);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Keep latest search criteria accessible inside listener callbacks
@@ -64,22 +64,26 @@ export function PropertyProvider({ children }) {
 
     const init = async () => {
       try {
-        // 1. Seed database if completely empty (no-op if already seeded)
-        await seedDatabaseIfEmpty();
+        // 1. Seed database in background (non-blocking)
+        seedDatabaseIfEmpty().catch((err) => {
+          console.warn('Firestore database background seeding check skipped/failed:', err);
+        });
 
-        // 2. Fetch static config (filterConfig tree + priceRanges) once
+        // 2. Fetch static config once in background (non-blocking)
         const configDocRef = doc(db, 'config', 'filters');
-        const configDocSnap = await getDoc(configDocRef);
+        getDoc(configDocRef)
+          .then((configDocSnap) => {
+            if (configDocSnap.exists() && !cancelled) {
+              const configData = configDocSnap.data();
+              setFilterConfig(configData.filterConfig || fallbackFilterConfig);
+              setPriceRanges(configData.priceRanges || fallbackPriceRanges);
+            }
+          })
+          .catch((err) => {
+            console.warn('Firestore fetch config error (using fallback config):', err);
+          });
 
-        if (configDocSnap.exists()) {
-          const configData = configDocSnap.data();
-          if (!cancelled) {
-            setFilterConfig(configData.filterConfig);
-            setPriceRanges(configData.priceRanges);
-          }
-        }
-
-        // 3. Real-time listener: properties collection
+        // 3. Real-time listener: properties collection (handles loading state immediately)
         const propertiesQuery = query(
           collection(db, 'properties'),
           orderBy('createdAt', 'desc')
@@ -89,19 +93,26 @@ export function PropertyProvider({ children }) {
           (snapshot) => {
             if (cancelled) return;
             const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-            // Only replace fallback if Firebase actually has data
             if (list.length > 0) {
               setProperties(list);
               setFilteredProperties(list);
+            } else {
+              // Fallback to database defaults if empty list
+              setProperties(fallbackProperties);
+              setFilteredProperties(fallbackProperties);
             }
+            setLoading(false);
           },
           (err) => {
             if (cancelled) return;
-            console.warn('Firestore properties listener error:', err);
+            console.warn('Firestore properties listener error (using fallback properties):', err);
+            setProperties(fallbackProperties);
+            setFilteredProperties(fallbackProperties);
+            setLoading(false);
           }
         );
 
-        // 4. Real-time listener: locations collection
+        // 4. Real-time listener: locations collection (non-blocking)
         unsubLocations = onSnapshot(
           collection(db, 'locations'),
           (snapshot) => {
@@ -116,15 +127,17 @@ export function PropertyProvider({ children }) {
           },
           (err) => {
             if (cancelled) return;
-            console.warn('Firestore locations listener error:', err);
+            console.warn('Firestore locations listener error (using fallback locations):', err);
           }
         );
 
         if (!cancelled) setError(null);
       } catch (err) {
         if (cancelled) return;
-        // Fallback data is already in state, just log the warning
-        console.warn('Firestore init failed, using local data:', err);
+        console.warn('Firestore init setup failed:', err);
+        setProperties(fallbackProperties);
+        setFilteredProperties(fallbackProperties);
+        setLoading(false);
       }
     };
 

@@ -80,9 +80,21 @@ function PropertyGrid() {
           Handpicked premium properties across Hyderabad
         </p>
 
-        {/* Property Grid - always renders real cards (state pre-populated with fallback data) */}
-        <div className='property-grid' ref={gridRef}>
-          {filteredProperties.length === 0 ? (
+        {loading ? (
+          <div>
+            <div className='property-grid-loading-message'>
+              <div className='spinner'></div>
+              <span>Loading amazing properties...</span>
+            </div>
+            <div className='property-grid'>
+              <PropertySkeleton />
+              <PropertySkeleton />
+              <PropertySkeleton />
+              <PropertySkeleton />
+            </div>
+          </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className='property-grid'>
             <div className='property-grid-empty'>
               <div className='property-grid-empty__icon'>🔍</div>
               <h3 className='property-grid-empty__title'>No Properties Found</h3>
@@ -93,14 +105,16 @@ function PropertyGrid() {
                 Clear Filters
               </button>
             </div>
-          ) : (
-            filteredProperties.map((property) => (
+          </div>
+        ) : (
+          <div className='property-grid' ref={gridRef}>
+            {filteredProperties.map((property) => (
               <div key={property.id} className='property-grid__item'>
                 <PropertyCard property={property} />
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

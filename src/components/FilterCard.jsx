@@ -262,7 +262,7 @@ function FilterCard() {
                 onChange={(e) => setSelectedMinPrice(Number(e.target.value))}
               >
                 {minPriceOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
+                  <option key={`${opt.label}-${opt.value}`} value={opt.value}>
                     {opt.label}
                   </option>
                 ))}
@@ -276,7 +276,7 @@ function FilterCard() {
                 onChange={(e) => setSelectedMaxPrice(Number(e.target.value))}
               >
                 {maxPriceOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
+                  <option key={`${opt.label}-${opt.value}`} value={opt.value}>
                     {opt.label}
                   </option>
                 ))}
