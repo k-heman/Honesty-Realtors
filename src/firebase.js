@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // Your web app's Firebase configuration, pulling from environment variables with fallback
@@ -19,6 +20,9 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore
 const db = getFirestore(app);
 
+// Initialize Auth
+const auth = getAuth(app);
+
 // Initialize Analytics conditionally (it is only supported in browser environment and if enabled)
 let analytics = null;
 isSupported().then((supported) => {
@@ -29,4 +33,4 @@ isSupported().then((supported) => {
   console.warn("Analytics initialization failed or is not supported in this environment:", err);
 });
 
-export { app, db, analytics };
+export { app, db, auth, analytics };

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { auth } from '../firebase';
 import '../styles/Modal.css';
 
 const WHATSAPP_NUMBER = '918523802251';
@@ -10,6 +12,18 @@ const WHATSAPP_NUMBER = '918523802251';
  * On submit, redirects to WhatsApp with property details and user info.
  */
 function EnquiryModal({ property, onClose }) {
+  useEffect(() => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: (response) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+          console.log('reCAPTCHA solved');
+        }
+      });
+    }
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,12 +32,70 @@ function EnquiryModal({ property, onClose }) {
     message: '',
   });
 
+  const [otpStep, setOtpStep] = useState(0); // 0: enter mobile, 1: enter otp, 2: verified
+  const [isLoading, setIsLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleSendOtp = () => {
+    if (!formData.mobile || formData.mobile.length < 10) {
+      setOtpError('Please enter a valid mobile number');
+      return;
+    }
+    
+    setIsLoading(true);
+    setOtpError('');
+    
+    let phoneNumber = formData.mobile.trim();
+    if (!phoneNumber.startsWith('+')) {
+      phoneNumber = '+91' + phoneNumber.replace(/\D/g, ''); 
+    }
+
+    signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
+      .then((confirmationResult) => {
+        window.confirmationResult = confirmationResult;
+        setOtpStep(1);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setOtpStep(0);
+        setIsLoading(false);
+        setOtpError('Failed to send OTP. Check number format or try again later.');
+      });
+  };
+
+  const handleVerifyOtp = () => {
+    if (!formData.otp || !window.confirmationResult) {
+      setOtpError('Please enter OTP');
+      return;
+    }
+    
+    setIsLoading(true);
+    setOtpError('');
+
+    window.confirmationResult.confirm(formData.otp)
+      .then((result) => {
+        setOtpStep(2);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setIsLoading(false);
+        setOtpError('Invalid OTP. Please check and try again.');
+      });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (otpStep !== 2) {
+      setOtpError('Please verify your mobile number with OTP first.');
+      return;
+    }
 
     // Build WhatsApp message
     const text = encodeURIComponent(
@@ -31,10 +103,8 @@ function EnquiryModal({ property, onClose }) {
       `*Property:* ${property.title}\n` +
       `*Location:* ${property.location}\n` +
       `*Price:* ${property.price}\n\n` +
-      `*Enquirer Details:*\n` +
-      `Name: ${formData.name}\n` +
-      `Email: ${formData.email}\n` +
-      `Mobile: ${formData.mobile}\n\n` +
+      `I am ${formData.name}\n` +
+      `*I have Enquiry on this property:*\n` +
       `*Message:*\n${formData.message || 'N/A'}`
     );
 
@@ -113,12 +183,23 @@ function EnquiryModal({ property, onClose }) {
                 onChange={handleChange}
                 maxLength='6'
                 className='modal__otp-input'
+                required
               />
-              <button type='button' className='modal__otp-btn' disabled>
-                Send OTP
+              <button 
+                type='button' 
+                className='modal__otp-btn'
+                onClick={otpStep === 0 ? handleSendOtp : handleVerifyOtp}
+                disabled={isLoading || otpStep === 2}
+                style={otpStep === 2 ? { backgroundColor: '#4caf50', color: '#fff', border: 'none' } : {}}
+              >
+                {isLoading ? (otpStep === 0 ? 'Sending...' : 'Verifying...') : 
+                 otpStep === 0 ? 'Send OTP' : 
+                 otpStep === 1 ? 'Verify OTP' : 
+                 '✅ Verified'}
               </button>
             </div>
-            <span className='modal__field-hint'>OTP verification coming soon</span>
+            <div id='recaptcha-container'></div>
+            {otpError && <span className='modal__field-hint' style={{ color: 'red' }}>{otpError}</span>}
           </div>
 
           <div className='modal__field'>
@@ -130,6 +211,7 @@ function EnquiryModal({ property, onClose }) {
               value={formData.message}
               onChange={handleChange}
               rows={4}
+              required
             />
           </div>
 
