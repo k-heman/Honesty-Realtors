@@ -27,6 +27,7 @@ function EnquiryModal({ property, onClose }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    countryCode: '+91',
     mobile: '',
     otp: '',
     message: '',
@@ -42,17 +43,14 @@ function EnquiryModal({ property, onClose }) {
 
   const handleSendOtp = () => {
     if (!formData.mobile || formData.mobile.length < 10) {
-      setOtpError('Please enter a valid mobile number');
+      setOtpError('Please enter a valid 10-digit mobile number');
       return;
     }
     
     setIsLoading(true);
     setOtpError('');
     
-    let phoneNumber = formData.mobile.trim();
-    if (!phoneNumber.startsWith('+')) {
-      phoneNumber = '+91' + phoneNumber.replace(/\D/g, ''); 
-    }
+    const phoneNumber = `${formData.countryCode}${formData.mobile}`;
 
     signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
       .then((confirmationResult) => {
@@ -104,6 +102,7 @@ function EnquiryModal({ property, onClose }) {
       `*Location:* ${property.location}\n` +
       `*Price:* ${property.price}\n\n` +
       `I am ${formData.name}\n` +
+      `*My Mobile:* ${formData.countryCode} ${formData.mobile}\n` +
       `*I have Enquiry on this property:*\n` +
       `*Message:*\n${formData.message || 'N/A'}`
     );
@@ -160,15 +159,34 @@ function EnquiryModal({ property, onClose }) {
 
           <div className='modal__field'>
             <label htmlFor='enquiry-mobile'>Mobile Number</label>
-            <input
-              type='tel'
-              id='enquiry-mobile'
-              name='mobile'
-              placeholder='+91 XXXXX XXXXX'
-              value={formData.mobile}
-              onChange={handleChange}
-              required
-            />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <select
+                name="countryCode"
+                value={formData.countryCode}
+                onChange={handleChange}
+                style={{ width: '100px', cursor: 'pointer' }}
+              >
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+61">🇦🇺 +61</option>
+                <option value="+971">🇦🇪 +971</option>
+              </select>
+              <input
+                type='tel'
+                id='enquiry-mobile'
+                name='mobile'
+                placeholder='10 digit number'
+                value={formData.mobile}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if(val.length <= 10) handleChange({ target: { name: 'mobile', value: val } });
+                }}
+                maxLength={10}
+                required
+                style={{ flex: 1 }}
+              />
+            </div>
           </div>
 
           <div className='modal__field'>

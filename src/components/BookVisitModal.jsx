@@ -34,6 +34,7 @@ function BookVisitModal({ property, onClose }) {
     email: '',
     visitDate: defaultDate,
     visitTime: '10:00',
+    countryCode: '+91',
     mobile: '',
     otp: '',
   });
@@ -48,17 +49,14 @@ function BookVisitModal({ property, onClose }) {
 
   const handleSendOtp = () => {
     if (!formData.mobile || formData.mobile.length < 10) {
-      setOtpError('Please enter a valid mobile number');
+      setOtpError('Please enter a valid 10-digit mobile number');
       return;
     }
     
     setIsLoading(true);
     setOtpError('');
     
-    let phoneNumber = formData.mobile.trim();
-    if (!phoneNumber.startsWith('+')) {
-      phoneNumber = '+91' + phoneNumber.replace(/\D/g, ''); 
-    }
+    const phoneNumber = `${formData.countryCode}${formData.mobile}`;
 
     signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
       .then((confirmationResult) => {
@@ -128,7 +126,7 @@ function BookVisitModal({ property, onClose }) {
       `Date: ${formattedDate}\n` +
       `Time: ${formattedTime}\n\n` +
       `My Mobile Number\n` +
-      `${formData.mobile}`
+      `${formData.countryCode} ${formData.mobile}`
     );
 
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank');
@@ -213,15 +211,34 @@ function BookVisitModal({ property, onClose }) {
 
           <div className='modal__field'>
             <label htmlFor='visit-mobile'>Mobile Number</label>
-            <input
-              type='tel'
-              id='visit-mobile'
-              name='mobile'
-              placeholder='+91 XXXXX XXXXX'
-              value={formData.mobile}
-              onChange={handleChange}
-              required
-            />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <select
+                name="countryCode"
+                value={formData.countryCode}
+                onChange={handleChange}
+                style={{ width: '100px', cursor: 'pointer' }}
+              >
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+61">🇦🇺 +61</option>
+                <option value="+971">🇦🇪 +971</option>
+              </select>
+              <input
+                type='tel'
+                id='visit-mobile'
+                name='mobile'
+                placeholder='10 digit number'
+                value={formData.mobile}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if(val.length <= 10) handleChange({ target: { name: 'mobile', value: val } });
+                }}
+                maxLength={10}
+                required
+                style={{ flex: 1 }}
+              />
+            </div>
           </div>
 
           <div className='modal__field'>
