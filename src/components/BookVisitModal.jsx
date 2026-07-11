@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import '../styles/Modal.css';
 
-const WEBHOOK_URL = '/api/webhook';
 const WHATSAPP_NUMBER = '918523802251';
 
 /**
@@ -80,7 +79,7 @@ function BookVisitModal({ property, onClose }) {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappText}`, '_blank');
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
+      const response = await fetch('https://workflow.ccbp.in/webhook/a7dd7e3a-8f7e-4af9-8913-10518c362f2f', {
         method: 'POST',
         mode: 'cors',
         headers: {
