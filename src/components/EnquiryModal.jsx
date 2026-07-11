@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import '../styles/Modal.css';
 
-const WEBHOOK_URL =
-  'https://workflow.ccbp.in/webhook-test/a7dd7e3a-8f7e-4af9-8913-10518c362f2f';
+const WEBHOOK_URL = '/api/webhook';
 const WHATSAPP_NUMBER = '918523802251';
 
 /**

@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/webhook",
+      "destination": "https://workflow.ccbp.in/webhook-test/a7dd7e3a-8f7e-4af9-8913-10518c362f2f"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
