@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import '../styles/Modal.css';
 
+const WEBHOOK_URL =
+  'https://workflow.ccbp.in/webhook-test/a7dd7e3a-8f7e-4af9-8913-10518c362f2f';
 const WHATSAPP_NUMBER = '918523802251';
 
 /**
  * EnquiryModal Component
- * Modal form for property enquiry with fields:
- * Name, Email, Mobile Number, and message text box.
- * On submit, redirects to WhatsApp with property details and user info.
+ * Sends lead data to n8n webhook + WhatsApp message to admin.
  */
 function EnquiryModal({ property, onClose }) {
   const [formData, setFormData] = useState({
@@ -18,30 +18,91 @@ function EnquiryModal({ property, onClose }) {
     message: '',
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMsg, setStatusMsg] = useState({ text: '', type: '' }); // type: 'success' | 'error'
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (statusMsg.text) setStatusMsg({ text: '', type: '' });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setStatusMsg({ text: '', type: '' });
 
-    // Build WhatsApp message
-    const text = encodeURIComponent(
+    const payload = {
+      formType: 'General Enquiry',
+      fullName: formData.name,
+      email: formData.email,
+      mobileNumber: `${formData.countryCode} ${formData.mobile}`,
+      message: formData.message,
+      property: {
+        title: property.title,
+        location: property.location,
+        price: property.price,
+      },
+    };
+
+    // Fire WhatsApp message immediately (in parallel with webhook)
+    const whatsappText = encodeURIComponent(
       `🏠 *Property Enquiry*\n\n` +
       `*Property:* ${property.title}\n` +
       `*Location:* ${property.location}\n` +
       `*Price:* ${property.price}\n\n` +
       `I am ${formData.name}\n` +
-      `*My Mobile:* ${formData.countryCode} ${formData.mobile}\n` +
-      `*I have Enquiry on this property:*\n` +
-      `*Message:*\n${formData.message || 'N/A'}`
+      `*Email:* ${formData.email}\n` +
+      `*Mobile:* ${formData.countryCode} ${formData.mobile}\n` +
+      `*Enquiry:*\n${formData.message || 'N/A'}`
     );
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappText}`, '_blank');
 
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank');
-    onClose();
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': 'HonestyRealtorSecret2026!',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setStatusMsg({ text: 'Enquiry submitted successfully!', type: 'success' });
+
+      // Clear form & auto-close after a short delay
+      setFormData({
+        name: '',
+        email: '',
+        countryCode: '+91',
+        mobile: '',
+        message: '',
+      });
+      setTimeout(() => onClose(), 2500);
+    } catch (error) {
+      console.error('Webhook fetch error:', error);
+
+      if (error instanceof TypeError) {
+        // CORS failure or network down
+        setStatusMsg({
+          text: 'Network error: Unable to reach the server. Please check your connection or try again later.',
+          type: 'error',
+        });
+      } else {
+        setStatusMsg({
+          text: `Failed to send request (${error.message}). Please try again later.`,
+          type: 'error',
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Close on backdrop click
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
@@ -71,6 +132,7 @@ function EnquiryModal({ property, onClose }) {
               value={formData.name}
               onChange={handleChange}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -84,6 +146,7 @@ function EnquiryModal({ property, onClose }) {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -95,6 +158,7 @@ function EnquiryModal({ property, onClose }) {
                 value={formData.countryCode}
                 onChange={handleChange}
                 style={{ width: '100px', cursor: 'pointer' }}
+                disabled={isSubmitting}
               >
                 <option value="+91">🇮🇳 +91</option>
                 <option value="+1">🇺🇸 +1</option>
@@ -110,10 +174,11 @@ function EnquiryModal({ property, onClose }) {
                 value={formData.mobile}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, '');
-                  if(val.length <= 10) handleChange({ target: { name: 'mobile', value: val } });
+                  if (val.length <= 10) handleChange({ target: { name: 'mobile', value: val } });
                 }}
                 maxLength={10}
                 required
+                disabled={isSubmitting}
                 style={{ flex: 1 }}
               />
             </div>
@@ -129,11 +194,33 @@ function EnquiryModal({ property, onClose }) {
               onChange={handleChange}
               rows={4}
               required
+              disabled={isSubmitting}
             />
           </div>
 
-          <button type='submit' className='modal__submit modal__submit--enquiry'>
-            📩 Submit Enquiry
+          {/* Inline status message */}
+          {statusMsg.text && (
+            <p
+              className='modal__status-msg'
+              style={{
+                color: statusMsg.type === 'success' ? '#16a34a' : '#dc2626',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                textAlign: 'center',
+                margin: '4px 0 0',
+                padding: '6px 0',
+              }}
+            >
+              {statusMsg.type === 'success' ? '✅' : '❌'} {statusMsg.text}
+            </p>
+          )}
+
+          <button
+            type='submit'
+            className='modal__submit modal__submit--enquiry'
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '⏳ Sending...' : '📩 Submit Enquiry'}
           </button>
         </form>
       </div>
