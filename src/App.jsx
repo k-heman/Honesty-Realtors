@@ -1,43 +1,55 @@
+import { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import PropertyGrid from './components/PropertyGrid';
-import PropertyDetails from './components/PropertyDetails';
 import Footer from './components/Footer';
+import FloatingWhatsApp from './components/FloatingWhatsApp';
+import FinalCTA from './components/FinalCTA';
+import ScrollToTopButton from './components/ScrollToTopButton';
+import ScrollToTop from './components/common/ScrollToTop';
 import { PropertyProvider } from './context/PropertyContext';
+import { SettingsProvider } from './context/SettingsContext';
 import './index.css';
 
-/**
- * HomePage Component
- * Landing page layout with hero and property grid
- */
-function HomePage() {
-  return (
-    <>
-      <HeroSection />
-      <PropertyGrid />
-    </>
-  );
-}
+// Lazy loaded routes mapping to reduce main bundle size initially
+const HomePage = lazy(() => import('./pages/HomePage'));
+const PropertyDetails = lazy(() => import('./components/PropertyDetails'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Global suspense fallback maintaining UX perfectly matched to the property skeletons
+const PageLoader = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+    <div className='spinner'></div>
+    <span style={{ color: 'var(--color-gold)', marginTop: '20px', fontWeight: 'bold' }}>Loading page...</span>
+  </div>
+);
 
 /**
  * App Component
- * Main application layout with routing, wrapped in PropertyProvider
+ * Main application layout with routing, wrapped in contexts.
  */
 function App() {
   return (
-    <PropertyProvider>
-      <div className='app'>
-        <Header />
-        <main>
-          <Routes>
-            <Route path='/' element={<HomePage />} />
-            <Route path='/property/:id' element={<PropertyDetails />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </PropertyProvider>
+    <SettingsProvider>
+      <PropertyProvider>
+        <div className='app'>
+          <ScrollToTop />
+          <Header />
+          <main>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path='/' element={<HomePage />} />
+                <Route path='/property/:id' element={<PropertyDetails />} />
+                <Route path='*' element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </main>
+          <FinalCTA />
+          <FloatingWhatsApp />
+          <ScrollToTopButton />
+          <Footer />
+        </div>
+      </PropertyProvider>
+    </SettingsProvider>
   );
 }
 

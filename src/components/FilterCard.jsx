@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useProperties } from '../context/PropertyContext';
+import { useSettings } from '../context/SettingsContext';
 import '../styles/FilterCard.css';
 
 // Manual Budget Range Options
@@ -39,7 +40,8 @@ const maxPriceOptions = [
  * - Permanent: Location and side-by-side Min/Max Price dropdown selectors
  */
 function FilterCard() {
-  const { properties, filterConfig, locations, triggerSearch, loading, searchCriteria } = useProperties();
+  const { properties, filterConfig, locations, triggerSearch, loading: loadingProperties, searchCriteria } = useProperties();
+  const { settings } = useSettings();
 
   // Search input state
   const [searchTerm, setSearchTerm] = useState('');
@@ -285,10 +287,27 @@ function FilterCard() {
           </div>
         </div>
 
-        {/* Search button */}
-        <button className='filter-card__search-btn' onClick={handleSearchSubmit}>
-          🔍 Search Properties
-        </button>
+        {/* Actions wrapper */}
+        <div className='filter-card__actions-wrapper'>
+          {/* Search button */}
+          <button className='filter-card__search-btn' onClick={handleSearchSubmit}>
+            🔍 Search Properties
+          </button>
+          
+          <div className='filter-card__secondary-actions'>
+            <a href={`tel:${settings?.phone || '+918523802251'}`} className='filter-card__sec-btn'>
+              📞 Call Expert
+            </a>
+            <a 
+              href={`https://wa.me/${settings?.whatsapp || '918523802251'}?text=Hello%20Honesty%20Realtor%2C%0AI%20am%20looking%20for%20a%20property%20in%20Hyderabad.%0ACan%20you%20help%20me%3F`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className='filter-card__sec-btn filter-card__sec-btn--whatsapp'
+            >
+              💬 WhatsApp
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

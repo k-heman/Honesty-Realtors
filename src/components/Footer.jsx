@@ -1,3 +1,4 @@
+import { useSettings } from '../context/SettingsContext';
 import '../styles/Footer.css';
 
 /**
@@ -9,6 +10,8 @@ import '../styles/Footer.css';
  * Plus a bottom copyright bar.
  */
 function Footer() {
+  const { settings } = useSettings();
+
   return (
     <footer className='footer' id='contact'>
       <div className='footer__container'>
@@ -40,12 +43,11 @@ function Footer() {
           </ul>
         </div>
 
-        {/* Contact info column */}
         <div className='footer__col'>
           <h4>Contact Us</h4>
-          <p>📍 Hyderabad, Telangana</p>
-          <p>📞 +91 85238 02251</p>
-          {/* <p>✉️ info@honestyrealtors.com</p> */}
+          <p>📍 {settings?.address || 'Hyderabad, Telangana'}</p>
+          <p>📞 {settings?.phone || '+91 85238 02251'}</p>
+          {settings?.email && <p>✉️ {settings.email}</p>}
         </div>
       </div>
 

@@ -1,13 +1,15 @@
 import { useState } from 'react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useSettings } from '../context/SettingsContext';
 import '../styles/Modal.css';
-
-const WHATSAPP_NUMBER = '918523802251';
 
 /**
  * EnquiryModal Component
  * Sends lead data to n8n webhook + WhatsApp message to admin.
  */
 function EnquiryModal({ property, onClose }) {
+  const { settings } = useSettings();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -53,22 +55,15 @@ function EnquiryModal({ property, onClose }) {
       `*Mobile:* ${formData.countryCode} ${formData.mobile}\n` +
       `*Enquiry:*\n${formData.message || 'N/A'}`
     );
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappText}`, '_blank');
+
+    const whatsappNum = settings?.whatsapp || '918523802251';
+    window.open(`https://wa.me/${whatsappNum}?text=${whatsappText}`, '_blank');
 
     try {
-      const response = await fetch('https://workflow.ccbp.in/webhook/a7dd7e3a-8f7e-4af9-8913-10518c362f2f', {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': 'HonestyRealtorSecret2026!',
-        },
-        body: JSON.stringify(payload),
+      await addDoc(collection(db, 'enquiries'), {
+        ...payload,
+        createdAt: serverTimestamp()
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
       setStatusMsg({ text: 'Enquiry submitted successfully!', type: 'success' });
 
@@ -82,20 +77,11 @@ function EnquiryModal({ property, onClose }) {
       });
       setTimeout(() => onClose(), 2500);
     } catch (error) {
-      console.error('Webhook fetch error:', error);
-
-      if (error instanceof TypeError) {
-        // CORS failure or network down
-        setStatusMsg({
-          text: 'Network error: Unable to reach the server. Please check your connection or try again later.',
-          type: 'error',
-        });
-      } else {
-        setStatusMsg({
-          text: `Failed to send request (${error.message}). Please try again later.`,
-          type: 'error',
-        });
-      }
+      console.error('Firebase save error:', error);
+      setStatusMsg({
+        text: `Failed to save request (${error.message}). Please try again later.`,
+        type: 'error',
+      });
     } finally {
       setIsSubmitting(false);
     }

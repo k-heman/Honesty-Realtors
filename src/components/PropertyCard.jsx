@@ -1,4 +1,6 @@
+import React, { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LazyImage from './LazyImage';
 import '../styles/PropertyCard.css';
 
 /**
@@ -24,7 +26,7 @@ function PropertyCard({ property }) {
     <div className='property-card' onClick={handleViewDetails}>
       {/* Image section with badges and hover overlay */}
       <div className='property-card__image-container'>
-        <img
+        <LazyImage
           src={property.image}
           alt={property.title}
           className='property-card__image'
@@ -68,4 +70,4 @@ function PropertyCard({ property }) {
   );
 }
 
-export default PropertyCard;
+export default memo(PropertyCard);

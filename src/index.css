@@ -168,3 +168,17 @@ h1, h2, h3, h4, h5, h6 {
 .app main {
   flex: 1;
 }
+
+/* ============================================
+   ACCESSIBILITY & FOCUS
+   ============================================ */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 4px;
+}

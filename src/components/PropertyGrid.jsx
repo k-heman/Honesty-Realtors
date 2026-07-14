@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import PropertyCard from './PropertyCard';
 import { useProperties } from '../context/PropertyContext';
+import EmptyState from './common/EmptyState';
+import ErrorState from './common/ErrorState';
 import '../styles/PropertyGrid.css';
 
 /**
@@ -31,7 +33,7 @@ function PropertySkeleton() {
  * Uses Firestore real-time context data.
  */
 function PropertyGrid() {
-  const { filteredProperties, loading, resetFilters } = useProperties();
+  const { filteredProperties, loading, error, resetFilters } = useProperties();
   // Ref to the grid container for observing child elements
   const gridRef = useRef(null);
 
@@ -93,19 +95,20 @@ function PropertyGrid() {
               <PropertySkeleton />
             </div>
           </div>
+        ) : error ? (
+           <ErrorState
+             title="Unable to load properties"
+             description="There was a problem loading real estate properties. Please try again."
+             retryAction={() => window.location.reload()}
+           />
         ) : filteredProperties.length === 0 ? (
-          <div className='property-grid'>
-            <div className='property-grid-empty'>
-              <div className='property-grid-empty__icon'>🔍</div>
-              <h3 className='property-grid-empty__title'>No Properties Found</h3>
-              <p className='property-grid-empty__description'>
-                No properties match your active search filters. Try selecting a different location or price range.
-              </p>
-              <button className='property-grid-empty__btn' onClick={resetFilters}>
-                Clear Filters
-              </button>
-            </div>
-          </div>
+          <EmptyState
+            icon="🔍"
+            title="No Properties Found"
+            description="No properties match your active search filters. Try selecting a different location or price range."
+            actionText="Clear Filters"
+            onAction={resetFilters}
+          />
         ) : (
           <div className='property-grid' ref={gridRef}>
             {filteredProperties.map((property) => (
