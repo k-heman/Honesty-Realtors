@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useProperties } from '../context/PropertyContext';
+import { useFavorites } from '../context/FavoritesContext';
+import { useCompare } from '../context/CompareContext';
 import '../styles/Header.css';
 
 /**
@@ -10,6 +13,10 @@ import '../styles/Header.css';
  */
 function Header() {
   const { filterConfig, triggerSearch, setSearchCriteria, searchCriteria } = useProperties();
+  const { favorites } = useFavorites();
+  const { compareList } = useCompare();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Track whether the mobile hamburger menu is open
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,7 +41,7 @@ function Header() {
 
   // Extract dynamic categories from configuration or use fallback
   const categories = filterConfig ? Object.keys(filterConfig) : ['Flats', 'Villas'];
-  const navLinks = ['Home', ...categories, 'Contact'];
+  const navLinks = ['Home', ...categories, `Favorites (${favorites.length})`, `Compare (${compareList.length})`, 'Contact'];
 
   // Handle navigation click and trigger respective action/scroll
   const handleNavLinkClick = (link, e) => {
@@ -42,6 +49,9 @@ function Header() {
     setIsMenuOpen(false);
 
     if (link === 'Home') {
+      if (location.pathname !== '/') {
+        navigate('/');
+      }
       // Clear filters and scroll to top
       setSearchCriteria({
         category: null,
@@ -59,12 +69,25 @@ function Header() {
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (link === 'Contact') {
-      // Scroll to footer contact section
-      const contactSection = document.getElementById('contact');
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
+      if (location.pathname !== '/') {
+        navigate('/');
+        // Small delay to let page load before scrolling
+        setTimeout(() => {
+          const contactSection = document.getElementById('contact');
+          if (contactSection) contactSection.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        const contactSection = document.getElementById('contact');
+        if (contactSection) contactSection.scrollIntoView({ behavior: 'smooth' });
       }
+    } else if (link.startsWith('Favorites')) {
+      navigate('/favorites');
+    } else if (link.startsWith('Compare')) {
+      navigate('/compare');
     } else {
+      if (location.pathname !== '/') {
+        navigate('/');
+      }
       // Select category filter and scroll to property grid
       triggerSearch({
         category: link,

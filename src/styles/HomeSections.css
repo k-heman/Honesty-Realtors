@@ -216,6 +216,23 @@
   .featured-localities__grid {
     gap: var(--space-4);
   }
+
+  .featured-localities__card {
+    height: 180px;
+  }
+
+  .featured-localities__content {
+    padding: var(--space-4);
+  }
+
+  .featured-localities__name {
+    font-size: var(--text-lg);
+  }
+
+  .featured-localities__count {
+    font-size: 0.65rem;
+    padding: 3px var(--space-2);
+  }
 }
 
 @media (max-width: 480px) {
@@ -229,5 +246,21 @@
 
   .featured-localities__grid {
     grid-template-columns: 1fr;
+  }
+
+  .featured-localities__card {
+    height: 160px;
+  }
+
+  .featured-localities__content {
+    padding: var(--space-3);
+  }
+
+  .featured-localities__name {
+    font-size: var(--text-base);
+  }
+
+  .featured-localities__count {
+    font-size: 0.6rem;
   }
 }

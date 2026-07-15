@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useProperties } from '../context/PropertyContext';
 import EnquiryModal from './EnquiryModal';
 import BookVisitModal from './BookVisitModal';
+import ShareModal from './ShareModal';
 import LazyImage from './LazyImage';
 import { useSEO } from '../hooks/useSEO';
 import '../styles/PropertyDetails.css';
@@ -31,6 +32,7 @@ function PropertyDetails() {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [showEnquiryModal, setShowEnquiryModal] = useState(false);
   const [showBookVisitModal, setShowBookVisitModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -55,6 +57,21 @@ function PropertyDetails() {
         ? [property.image]
         : []
     : [];
+
+  const handleShare = () => {
+    const propertyUrl = `${window.location.origin}/property/${property.id}`;
+    const shareText = `Check out this property: ${property.title} in ${property.location} - ${property.price}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: property.title,
+        text: shareText,
+        url: propertyUrl,
+      }).catch(err => console.log('Error sharing', err));
+    } else {
+      setShowShareModal(true);
+    }
+  };
 
   const handlePrevImage = () => {
     setActiveImageIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -297,6 +314,13 @@ function PropertyDetails() {
               >
                 📩 Enquiry Now
               </button>
+              <button
+                className='property-details__action-btn'
+                onClick={handleShare}
+                style={{ background: 'var(--color-white)', color: 'var(--color-navy)', border: '2px solid var(--color-navy)' }}
+              >
+                ↪️ Share
+              </button>
             </div>
           </div>
         </div>
@@ -313,6 +337,12 @@ function PropertyDetails() {
         <BookVisitModal
           property={property}
           onClose={() => setShowBookVisitModal(false)}
+        />
+      )}
+      {showShareModal && (
+        <ShareModal 
+          property={property} 
+          onClose={() => setShowShareModal(false)} 
         />
       )}
     </section>

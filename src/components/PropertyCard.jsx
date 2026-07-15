@@ -1,6 +1,10 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LazyImage from './LazyImage';
+import ShareModal from './ShareModal';
+import { useFavorites } from '../context/FavoritesContext';
+import { useCompare } from '../context/CompareContext';
+import { stripHtml } from '../utils/stripHtml';
 import '../styles/PropertyCard.css';
 
 /**
@@ -17,9 +21,42 @@ import '../styles/PropertyCard.css';
  */
 function PropertyCard({ property }) {
   const navigate = useNavigate();
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { toggleCompare, isComparing } = useCompare();
+  
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  const isFav = isFavorite(property.id);
+  const isComp = isComparing(property.id);
 
   const handleViewDetails = () => {
     navigate(`/property/${property.id}`);
+  };
+
+  const handleShare = (e) => {
+    e.stopPropagation();
+    const propertyUrl = `${window.location.origin}/property/${property.id}`;
+    const shareText = `Check out this property: ${property.title} in ${property.location} - ${property.price}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: property.title,
+        text: shareText,
+        url: propertyUrl,
+      }).catch(err => console.log('Error sharing', err));
+    } else {
+      setShowShareModal(true);
+    }
+  };
+
+  const handleToggleFavorite = (e) => {
+    e.stopPropagation();
+    toggleFavorite(property.id);
+  };
+
+  const handleToggleCompare = (e) => {
+    e.stopPropagation();
+    toggleCompare(property.id);
   };
 
   return (
@@ -46,6 +83,24 @@ function PropertyCard({ property }) {
         </div>
         {/* Gradient overlay for visual depth on hover */}
         <div className='property-card__image-overlay'></div>
+        
+        {/* Top-right floating actions: Share and Heart */}
+        <div className='property-card__actions-top'>
+          <button 
+            className='property-card__icon-btn' 
+            onClick={handleShare}
+            title='Share Property'
+          >
+            ↪️
+          </button>
+          <button 
+            className={`property-card__icon-btn ${isFav ? 'property-card__icon-btn--fav' : ''}`} 
+            onClick={handleToggleFavorite}
+            title={isFav ? 'Remove from Favorites' : 'Add to Favorites'}
+          >
+            {isFav ? '❤️' : '🤍'}
+          </button>
+        </div>
       </div>
 
       {/* Card content section */}
@@ -61,11 +116,31 @@ function PropertyCard({ property }) {
           <span className='property-card__detail-badge'>{property.type}</span>
         </div>
 
-        <p className='property-card__description'>{property.description}</p>
+        <p className='property-card__description'>
+          {stripHtml(property.description, 120)}
+        </p>
 
-        {/* Call-to-action button */}
-        <button className='property-card__btn' onClick={handleViewDetails}>View Details →</button>
+        {/* Actions row: View Details and Compare */}
+        <div className='property-card__actions-bottom'>
+          <button className='property-card__btn' onClick={handleViewDetails}>View Details →</button>
+          <button 
+            className={`property-card__compare-btn ${isComp ? 'active' : ''}`} 
+            onClick={handleToggleCompare}
+          >
+            {isComp ? '✓ Added to Compare' : '+ Compare'}
+          </button>
+        </div>
       </div>
+
+      {showShareModal && (
+        <ShareModal 
+          property={property} 
+          onClose={(e) => { 
+            if(e) e.stopPropagation(); 
+            setShowShareModal(false); 
+          }} 
+        />
+      )}
     </div>
   );
 }

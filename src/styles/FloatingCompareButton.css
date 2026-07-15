@@ -1,0 +1,63 @@
+.floating-compare {
+  position: fixed;
+  bottom: 90px;
+  right: 30px;
+  z-index: var(--z-modal);
+  display: flex;
+  cursor: pointer;
+  animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.floating-compare__badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--color-gold);
+  color: var(--color-navy);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-xs);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+}
+
+.floating-compare__btn {
+  background: var(--color-navy);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-heading);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-shadow: 0 10px 25px rgba(10, 22, 40, 0.3);
+  transition: all var(--transition-bounce);
+  pointer-events: none;
+}
+
+.floating-compare:hover .floating-compare__btn {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 35px rgba(10, 22, 40, 0.4);
+  background: var(--color-navy-light);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .floating-compare {
+    bottom: 80px;
+    right: 20px;
+  }
+}

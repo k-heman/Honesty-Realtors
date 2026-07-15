@@ -8,11 +8,16 @@ import ScrollToTopButton from './components/ScrollToTopButton';
 import ScrollToTop from './components/common/ScrollToTop';
 import { PropertyProvider } from './context/PropertyContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { FavoritesProvider } from './context/FavoritesContext';
+import { CompareProvider } from './context/CompareContext';
+import FloatingCompareButton from './components/FloatingCompareButton';
 import './index.css';
 
 // Lazy loaded routes mapping to reduce main bundle size initially
 const HomePage = lazy(() => import('./pages/HomePage'));
 const PropertyDetails = lazy(() => import('./components/PropertyDetails'));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
+const ComparePage = lazy(() => import('./pages/ComparePage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Global suspense fallback maintaining UX perfectly matched to the property skeletons
@@ -31,23 +36,30 @@ function App() {
   return (
     <SettingsProvider>
       <PropertyProvider>
-        <div className='app'>
-          <ScrollToTop />
-          <Header />
-          <main>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path='/' element={<HomePage />} />
-                <Route path='/property/:id' element={<PropertyDetails />} />
-                <Route path='*' element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </main>
-          <FinalCTA />
-          <FloatingWhatsApp />
-          <ScrollToTopButton />
-          <Footer />
-        </div>
+        <FavoritesProvider>
+          <CompareProvider>
+            <div className='app'>
+              <ScrollToTop />
+              <Header />
+              <main>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path='/' element={<HomePage />} />
+                    <Route path='/property/:id' element={<PropertyDetails />} />
+                    <Route path='/favorites' element={<FavoritesPage />} />
+                    <Route path='/compare' element={<ComparePage />} />
+                    <Route path='*' element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </main>
+              <FinalCTA />
+              <FloatingWhatsApp />
+              <FloatingCompareButton />
+              <ScrollToTopButton />
+              <Footer />
+            </div>
+          </CompareProvider>
+        </FavoritesProvider>
       </PropertyProvider>
     </SettingsProvider>
   );
