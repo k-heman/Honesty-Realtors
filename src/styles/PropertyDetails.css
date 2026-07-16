@@ -407,6 +407,30 @@
   text-align: center;
 }
 
+.property-details__action-btn--call {
+  background: #059669;
+  color: var(--color-white);
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.25);
+}
+
+.property-details__action-btn--call:hover {
+  background: #047857;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.35);
+}
+
+.property-details__action-btn--whatsapp {
+  background: #25D366;
+  color: var(--color-white);
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.25);
+}
+
+.property-details__action-btn--whatsapp:hover {
+  background: #1fb855;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(37, 211, 102, 0.35);
+}
+
 .property-details__action-btn--visit {
   background: var(--color-navy);
   color: var(--color-white);
@@ -428,6 +452,19 @@
 .property-details__action-btn--enquiry:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(200, 169, 81, 0.4);
+}
+
+.property-details__action-btn--share {
+  background: var(--color-white);
+  color: var(--color-navy);
+  border: 2px solid var(--color-navy);
+}
+
+.property-details__action-btn--share:hover {
+  background: var(--color-navy);
+  color: var(--color-white);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(10, 22, 40, 0.25);
 }
 
 /* === Loading State === */

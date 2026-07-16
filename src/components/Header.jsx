@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useProperties } from '../context/PropertyContext';
 import { useFavorites } from '../context/FavoritesContext';
@@ -10,6 +10,7 @@ import '../styles/Header.css';
  * Sticky navigation bar with scroll-based styling and mobile hamburger menu.
  * - Dynamic category navigation fetched from database
  * - Smooth scroll integration with search filter actions
+ * - Body scroll lock when mobile menu is open
  */
 function Header() {
   const { filterConfig, triggerSearch, setSearchCriteria, searchCriteria } = useProperties();
@@ -34,10 +35,25 @@ function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.classList.add('menu-open');
+    } else {
+      document.body.classList.remove('menu-open');
+    }
+    return () => document.body.classList.remove('menu-open');
+  }, [isMenuOpen]);
+
+  // Close menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
   // Toggle the mobile menu open/closed
-  const toggleMenu = () => {
+  const toggleMenu = useCallback(() => {
     setIsMenuOpen((prev) => !prev);
-  };
+  }, []);
 
   // Extract dynamic categories from configuration or use fallback
   const categories = filterConfig ? Object.keys(filterConfig) : ['Flats', 'Villas'];
@@ -104,6 +120,15 @@ function Header() {
     }
   };
 
+  // Determine active link
+  const isActiveLink = (link) => {
+    if (link === 'Home' && location.pathname === '/' && !searchCriteria?.category) return true;
+    if (link.startsWith('Favorites') && location.pathname === '/favorites') return true;
+    if (link.startsWith('Compare') && location.pathname === '/compare') return true;
+    if (link !== 'Home' && link !== 'Contact' && !link.startsWith('Favorites') && !link.startsWith('Compare') && searchCriteria?.category === link) return true;
+    return false;
+  };
+
   return (
     <header className={`header ${isScrolled ? 'header--scrolled' : ''}`}>
       <div className='header__container'>
@@ -119,22 +144,16 @@ function Header() {
 
         {/* Desktop navigation links */}
         <nav className='header__nav'>
-          {navLinks.map((link) => {
-            const isLinkActive = 
-              (link === 'Home' && !searchCriteria?.category) ||
-              (link !== 'Home' && link !== 'Contact' && searchCriteria?.category === link);
-
-            return (
-              <a 
-                key={link} 
-                className={`header__nav-link ${isLinkActive ? 'active' : ''}`} 
-                href='#'
-                onClick={(e) => handleNavLinkClick(link, e)}
-              >
-                {link}
-              </a>
-            );
-          })}
+          {navLinks.map((link) => (
+            <a 
+              key={link} 
+              className={`header__nav-link ${isActiveLink(link) ? 'active' : ''}`} 
+              href='#'
+              onClick={(e) => handleNavLinkClick(link, e)}
+            >
+              {link}
+            </a>
+          ))}
         </nav>
 
         {/* Hamburger button for mobile - 3 animated bars */}
@@ -155,7 +174,7 @@ function Header() {
           {navLinks.map((link) => (
             <a
               key={link}
-              className='header__mobile-nav-link'
+              className={`header__mobile-nav-link ${isActiveLink(link) ? 'active' : ''}`}
               href='#'
               onClick={(e) => handleNavLinkClick(link, e)}
             >

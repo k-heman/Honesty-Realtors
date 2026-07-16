@@ -64,11 +64,24 @@ export default function ComparePage() {
     );
   };
 
+  // Detail rows for mobile cards
+  const detailKeys = [
+    { label: 'Location', key: 'location' },
+    { label: 'Type', key: 'type' },
+    { label: 'Category', key: 'category' },
+    { label: 'Area', key: 'area' },
+    { label: 'Bedrooms', key: 'bhk' },
+    { label: 'Facing', key: 'facing' },
+    { label: 'Status', key: 'status' },
+    { label: 'Approval', key: 'approval' },
+  ];
+
   return (
     <div className="compare-page">
       <div className="compare-page__container">
         <h1 className="compare-page__title">Compare Properties</h1>
         
+        {/* Desktop Table (hidden on mobile via CSS) */}
         <div className="compare-page__table-wrapper">
           <table className="compare-table">
             <thead>
@@ -119,6 +132,59 @@ export default function ComparePage() {
               {renderRow('Video Available', 'youtubeLink', (val) => val ? '✅ Yes' : '❌ No')}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Comparison Cards (hidden on desktop via CSS) */}
+        <div className="compare-mobile-cards">
+          {compareProperties.map((p) => (
+            <div key={p.id} className="compare-mobile-card">
+              <div className="compare-mobile-card__image-wrapper">
+                <LazyImage 
+                  src={p.image} 
+                  alt={p.title} 
+                  className="compare-mobile-card__image"
+                />
+                <button 
+                  className="compare-mobile-card__remove"
+                  onClick={() => removeFromCompare(p.id)}
+                  title="Remove from comparison"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="compare-mobile-card__body">
+                <h3 className="compare-mobile-card__title">{p.title}</h3>
+                <div className="compare-mobile-card__price">{p.price}</div>
+                <div className="compare-mobile-card__details">
+                  {detailKeys.map(({ label, key }) => (
+                    p[key] ? (
+                      <div key={key} className="compare-mobile-card__detail-row">
+                        <span className="compare-mobile-card__detail-label">{label}</span>
+                        <span className="compare-mobile-card__detail-value">{p[key]}</span>
+                      </div>
+                    ) : null
+                  ))}
+                  {/* Amenities */}
+                  {p.amenities && (
+                    <div className="compare-mobile-card__detail-row">
+                      <span className="compare-mobile-card__detail-label">Amenities</span>
+                      <span className="compare-mobile-card__detail-value">
+                        {(Array.isArray(p.amenities) ? p.amenities : p.amenities.split(',')).filter(a => a.trim()).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="compare-mobile-card__actions">
+                <button 
+                  className="compare-mobile-card__view-btn"
+                  onClick={() => navigate(`/property/${p.id}`)}
+                >
+                  View Details →
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

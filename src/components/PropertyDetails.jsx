@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProperties } from '../context/PropertyContext';
+import { useSettings } from '../context/SettingsContext';
 import EnquiryModal from './EnquiryModal';
 import BookVisitModal from './BookVisitModal';
 import ShareModal from './ShareModal';
@@ -18,6 +19,26 @@ const getYouTubeEmbedUrl = (url) => {
     : null;
 };
 
+/** Strip HTML tags and decode common entities for clean text rendering */
+const stripHtmlForDescription = (html) => {
+  if (!html) return '';
+  let text = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return text;
+};
+
 /**
  * PropertyDetails Component
  * Full-page property view with image gallery, detailed info, and action buttons.
@@ -27,6 +48,7 @@ function PropertyDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { properties, loading } = useProperties();
+  const { settings } = useSettings();
 
   const [property, setProperty] = useState(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -81,6 +103,20 @@ function PropertyDetails() {
     setActiveImageIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
+  const handleCall = () => {
+    const phone = settings?.phone || '+918523802251';
+    window.open(`tel:${phone.replace(/\s+/g, '')}`, '_self');
+  };
+
+  const handleWhatsApp = () => {
+    const phone = settings?.whatsapp || settings?.phone || '+918523802251';
+    const cleanPhone = phone.replace(/[^0-9+]/g, '');
+    const msg = encodeURIComponent(
+      `Hi, I'm interested in the property: ${property.title} (${property.price}) in ${property.location}. Can you provide more details?`
+    );
+    window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${msg}`, '_blank');
+  };
+
   useSEO({
     title: property ? `${property.title} | ${property.bhk || ''} ${property.type || 'Property'} in ${property.location} | Honesty Realtor` : 'Loading Property... | Honesty Realtor',
     description: property ? `Explore ${property.title} located in ${property.location}. Priced at ${property.price}. Find your dream property with Honesty Realtor.` : '',
@@ -100,6 +136,34 @@ function PropertyDetails() {
       }
     } : null
   });
+
+  // Build feature chips from property data
+  const getFeatureChips = () => {
+    if (!property) return [];
+    const chips = [];
+    if (property.approval) chips.push({ icon: '✅', label: `${property.approval} Approved` });
+    if (property.facing) chips.push({ icon: '🧭', label: `${property.facing} Facing` });
+    if (property.bhk) chips.push({ icon: '🏠', label: property.bhk });
+    if (property.status) chips.push({ icon: '📋', label: property.status });
+    if (property.parking) chips.push({ icon: '🚗', label: 'Parking' });
+    if (property.loanAvailable) chips.push({ icon: '🏦', label: 'Loan Available' });
+    return chips;
+  };
+
+  // Build info card rows
+  const getInfoRows = () => {
+    if (!property) return [];
+    const rows = [];
+    if (property.type) rows.push({ icon: '🏢', label: 'Property Type', value: property.type });
+    if (property.price) rows.push({ icon: '💰', label: 'Price', value: property.price });
+    if (property.bhk) rows.push({ icon: '🛏️', label: 'Bedrooms', value: property.bhk });
+    if (property.area) rows.push({ icon: '📐', label: 'Area', value: property.area });
+    if (property.facing) rows.push({ icon: '🧭', label: 'Facing', value: property.facing });
+    if (property.approval) rows.push({ icon: '✅', label: 'Approval', value: property.approval });
+    if (property.status) rows.push({ icon: '📋', label: 'Status', value: property.status });
+    if (property.category) rows.push({ icon: '📁', label: 'Category', value: property.category });
+    return rows;
+  };
 
   // Loading state with Skeleton
   if (loading) {
@@ -143,6 +207,10 @@ function PropertyDetails() {
       </section>
     );
   }
+
+  const featureChips = getFeatureChips();
+  const infoRows = getInfoRows();
+  const cleanDescription = stripHtmlForDescription(property.description);
 
   return (
     <section className='property-details-section'>
@@ -230,7 +298,32 @@ function PropertyDetails() {
 
             <p className='property-details__price'>{property.price}</p>
 
-            {/* Property specs */}
+            {/* Feature Chips */}
+            {featureChips.length > 0 && (
+              <div className='property-details__features-grid'>
+                {featureChips.map((chip, idx) => (
+                  <span key={idx} className='property-details__feature-chip'>
+                    {chip.icon} {chip.label}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Structured Info Card */}
+            {infoRows.length > 0 && (
+              <div className='property-details__info-card'>
+                {infoRows.map((row, idx) => (
+                  <div key={idx} className='property-details__info-card-row'>
+                    <span className='property-details__info-label'>
+                      {row.icon} {row.label}
+                    </span>
+                    <span className='property-details__info-value'>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Property specs (kept for desktop view consistency) */}
             <div className='property-details__specs'>
               {property.bhk && (
                 <div className='property-details__spec'>
@@ -291,23 +384,18 @@ function PropertyDetails() {
               </div>
             )}
 
-            {/* Description */}
+            {/* Description - Clean text, no HTML */}
             <div className='property-details__description-section'>
               <h3 className='property-details__section-title'>About this Property</h3>
-              <div 
-                className='property-details__description' 
-                dangerouslySetInnerHTML={{ __html: property.description }} 
-              />
+              <div className='property-details__description'>
+                {cleanDescription.split('\n').map((line, idx) => (
+                  line.trim() ? <p key={idx} style={{ marginBottom: '0.5em' }}>{line}</p> : <br key={idx} />
+                ))}
+              </div>
             </div>
 
             {/* Action Buttons */}
             <div className='property-details__actions'>
-              <button
-                className='property-details__action-btn property-details__action-btn--visit'
-                onClick={() => setShowBookVisitModal(true)}
-              >
-                📅 Book a Site Visit
-              </button>
               <button
                 className='property-details__action-btn property-details__action-btn--enquiry'
                 onClick={() => setShowEnquiryModal(true)}
@@ -315,15 +403,40 @@ function PropertyDetails() {
                 📩 Enquiry Now
               </button>
               <button
-                className='property-details__action-btn'
+                className='property-details__action-btn property-details__action-btn--visit'
+                onClick={() => setShowBookVisitModal(true)}
+              >
+                📅 Book a Site Visit
+              </button>
+              <button
+                className='property-details__action-btn property-details__action-btn--share'
                 onClick={handleShare}
-                style={{ background: 'var(--color-white)', color: 'var(--color-navy)', border: '2px solid var(--color-navy)' }}
               >
                 ↪️ Share
               </button>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* === Sticky Bottom Action Bar (mobile only) === */}
+      <div className='property-details__sticky-bar'>
+        <button className='property-details__sticky-btn property-details__sticky-btn--call' onClick={handleCall}>
+          <span className='property-details__sticky-btn-icon'>📞</span>
+          Call
+        </button>
+        <button className='property-details__sticky-btn property-details__sticky-btn--whatsapp' onClick={handleWhatsApp}>
+          <span className='property-details__sticky-btn-icon'>💬</span>
+          WhatsApp
+        </button>
+        <button className='property-details__sticky-btn property-details__sticky-btn--enquiry' onClick={() => setShowEnquiryModal(true)}>
+          <span className='property-details__sticky-btn-icon'>📩</span>
+          Enquiry
+        </button>
+        <button className='property-details__sticky-btn property-details__sticky-btn--visit' onClick={() => setShowBookVisitModal(true)}>
+          <span className='property-details__sticky-btn-icon'>📅</span>
+          Site Visit
+        </button>
       </div>
 
       {/* Modals */}

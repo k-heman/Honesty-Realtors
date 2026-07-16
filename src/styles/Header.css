@@ -94,8 +94,13 @@
   color: var(--color-gold-dark);
 }
 
-.header__nav-link:hover::after {
+.header__nav-link:hover::after,
+.header__nav-link.active::after {
   width: 100%;
+}
+
+.header__nav-link.active {
+  color: var(--color-gold-dark);
 }
 
 /* === Hamburger Menu === */
@@ -138,37 +143,32 @@
 /* === Mobile Navigation === */
 .header__mobile-nav {
   display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: var(--space-6) var(--space-6) var(--space-8);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  animation: slideDown 0.3s ease-out forwards;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .header__mobile-nav-link {
-  display: block;
-  padding: var(--space-4) var(--space-2);
+  display: flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-3);
   font-size: var(--text-base);
   font-weight: var(--fw-semibold);
   color: var(--color-text-primary);
   border-bottom: 1px solid var(--color-light-gray);
   transition: all var(--transition-fast);
   text-decoration: none;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-1);
 }
 
 .header__mobile-nav-link:last-child {
   border-bottom: none;
 }
 
-.header__mobile-nav-link:hover {
-  padding-left: var(--space-4);
+.header__mobile-nav-link:hover,
+.header__mobile-nav-link.active {
+  background: rgba(200, 169, 81, 0.08);
   color: var(--color-gold-dark);
+  padding-left: var(--space-5);
+  border-color: transparent;
 }
 
 /* === Responsive === */
@@ -183,6 +183,21 @@
 
   .header__mobile-nav {
     display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height if supported */
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 90px var(--space-6) var(--space-8);
+    box-shadow: none;
+    z-index: calc(var(--z-header) - 1); /* Underneath header content so hamburger/logo stay clickable! */
+    overflow-y: auto;
+    animation: slideDown 0.3s ease-out forwards;
+    border-bottom: none;
   }
 
   .header__brand {
