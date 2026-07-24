@@ -15,7 +15,7 @@ export default function HomePage() {
       "@context": "https://schema.org",
       "@type": "RealEstateAgent",
       "name": "Honesty Realtor",
-      "image": `${window.location.origin}/images/logo.png`,
+      "image": `${window.location.origin}/images/honestylogo.jpeg`,
       "url": window.location.origin,
       "address": {
         "@type": "PostalAddress",

@@ -121,7 +121,7 @@ function PropertyDetails() {
     title: property ? `${property.title} | ${property.bhk || ''} ${property.type || 'Property'} in ${property.location} | Honesty Realtor` : 'Loading Property... | Honesty Realtor',
     description: property ? `Explore ${property.title} located in ${property.location}. Priced at ${property.price}. Find your dream property with Honesty Realtor.` : '',
     url: window.location.href,
-    image: images[0] || `${window.location.origin}/images/logo.png`,
+    image: images[0] || `${window.location.origin}/images/honestylogo.jpeg`,
     schema: property ? {
       "@context": "https://schema.org",
       "@type": "Product",

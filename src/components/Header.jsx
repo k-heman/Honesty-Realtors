@@ -135,7 +135,7 @@ function Header() {
         {/* Logo and brand name */}
         <a className='header__logo-link' href='#' onClick={(e) => handleNavLinkClick('Home', e)}>
           <img
-            src='/images/logo.png'
+            src='/images/honestylogo.jpeg'
             alt='Honesty Realtor'
             className='header-logo'
           />
